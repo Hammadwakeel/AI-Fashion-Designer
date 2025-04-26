@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --primary: 120 82% 33%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 9%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 80%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 120 82% 33%;
+    --radius: 0.5rem;
+  }
+}
+
+/* Custom gradients */
+.bg-gradient-black {
+  background: linear-gradient(to right, #000000, #434343, #000000);
+}
+
+.bg-gradient-green {
+  background: linear-gradient(to right, #000000, #0f9b0f, #000000);
+  background-size: 200% auto;
+  transition: all 0.5s ease;
+}
+
+.bg-gradient-green:hover {
+  background-position: right center;
+}
+
+/* Component styles */
+.btn-primary {
+  @apply text-white font-medium py-2 px-4 rounded-md shadow-md transition-all duration-500;
+}
+
+.card-gradient {
+  @apply rounded-lg border-none shadow-xl text-white;
+}
+
+body {
+  @apply bg-black text-white;
+}
+
+/* Main content padding for sidebar */
+@media (min-width: 768px) {
+  .md\:ml-64 {
+    margin-left: 16rem;
+  }
+}
+
+/* Responsive adjustments */
+.container {
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
