@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
+import { Textarea } from "@/components/ui/textarea"
+import { Loader2, Sparkles, ImageIcon, Wand2, Shirt } from "lucide-react"
 import { motion } from "framer-motion"
-import Link from "next/link"
-import { Shirt, Footprints, Sparkles, Zap, Palette, Wand2, ArrowRight } from "lucide-react"
 
 // Animation variants
 const fadeIn = {
@@ -15,285 +16,404 @@ const slideUp = {
   visible: { y: 0, opacity: 1, transition: { duration: 0.5 } },
 }
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+const buttonHover = {
+  rest: { scale: 1 },
+  hover: {
+    scale: 1.05,
+    transition: { duration: 0.2 },
   },
+  tap: { scale: 0.95 },
 }
 
 export default function Home() {
-  const features = [
-    {
-      icon: <Wand2 className="h-10 w-10 text-green-500" />,
-      title: "AI-Powered Design",
-      description:
-        "Generate stunning fashion designs with just a text prompt. Our AI understands fashion concepts and trends.",
-    },
-    {
-      icon: <Sparkles className="h-10 w-10 text-green-500" />,
-      title: "Prompt Enhancement",
-      description:
-        "Not sure how to describe what you want? Our AI can enhance your simple prompts into detailed design instructions.",
-    },
-    {
-      icon: <Palette className="h-10 w-10 text-green-500" />,
-      title: "Design Editing",
-      description:
-        "Easily modify generated designs with simple text instructions. Change colors, styles, and details instantly.",
-    },
-    {
-      icon: <Zap className="h-10 w-10 text-green-500" />,
-      title: "Rapid Prototyping",
-      description:
-        "Create multiple design variations in minutes instead of days. Perfect for fashion designers and brands.",
-    },
-  ]
+  const [rawPrompt, setRawPrompt] = useState("")
+  const [enhancedPrompt, setEnhancedPrompt] = useState("")
+  const [generatedImage, setGeneratedImage] = useState("")
+  const [currentImage, setCurrentImage] = useState("")
+  const [updateInstruction, setUpdateInstruction] = useState("")
+  const [updatedImage, setUpdatedImage] = useState("")
+  const [loading, setLoading] = useState({
+    enhance: false,
+    generate: false,
+    update: false,
+  })
+  const [error, setError] = useState("")
+  const [showEditSection, setShowEditSection] = useState(false)
 
-  const testimonials = [
-    {
-      quote:
-        "FashionAI Studio has revolutionized our design process. We can now create and iterate on designs in hours instead of weeks.",
-      author: "Sarah Johnson",
-      role: "Creative Director, StyleHouse",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-    },
-    {
-      quote:
-        "The prompt enhancement feature is incredible. I can start with a simple idea and the AI helps me refine it into something truly unique.",
-      author: "Michael Chen",
-      role: "Independent Fashion Designer",
-      avatar: "https://randomuser.me/api/portraits/men/45.jpg",
-    },
-    {
-      quote:
-        "As a small boutique, we couldn't afford a full design team. FashionAI Studio gives us the ability to create custom designs at a fraction of the cost.",
-      author: "Emma Rodriguez",
-      role: "Owner, Boutique Elegance",
-      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-    },
-  ]
+  const API_BASE_URL = "https://hammad712-fashion-designer.hf.space"
+
+  const enhancePrompt = async () => {
+    if (!rawPrompt.trim()) {
+      setError("Please enter a prompt to enhance")
+      return
+    }
+
+    setError("")
+    setLoading((prev) => ({ ...prev, enhance: true }))
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/enhance-prompt`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ raw_prompt: rawPrompt }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      setEnhancedPrompt(data.enhanced_prompt)
+    } catch (err: any) {
+      setError(`Failed to enhance prompt: ${err.message}`)
+    } finally {
+      setLoading((prev) => ({ ...prev, enhance: false }))
+    }
+  }
+
+  const generateImage = async (useEnhanced = true) => {
+    const promptToUse = useEnhanced ? enhancedPrompt : rawPrompt
+
+    if (!promptToUse.trim()) {
+      setError(`Please enter a ${useEnhanced ? "enhanced" : "raw"} prompt first`)
+      return
+    }
+
+    setError("")
+    setLoading((prev) => ({ ...prev, generate: true }))
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/generate-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(useEnhanced ? { enhanced_prompt: enhancedPrompt } : { raw_prompt: rawPrompt }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      setGeneratedImage(`data:image/png;base64,${data.image_base64}`)
+      setCurrentImage(`data:image/png;base64,${data.image_base64}`)
+    } catch (err: any) {
+      setError(`Failed to generate image: ${err.message}`)
+    } finally {
+      setLoading((prev) => ({ ...prev, generate: false }))
+    }
+  }
+
+  const updateImage = async () => {
+    if (!currentImage) {
+      setError("Please generate an image first")
+      return
+    }
+
+    if (!updateInstruction.trim()) {
+      setError("Please enter update instructions")
+      return
+    }
+
+    setError("")
+    setLoading((prev) => ({ ...prev, update: true }))
+
+    try {
+      // Extract base64 data without the prefix
+      const base64Data = currentImage.replace(/^data:image\/\w+;base64,/, "")
+
+      const response = await fetch(`${API_BASE_URL}/update-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text_instruction: updateInstruction,
+          image_base64: base64Data,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      setUpdatedImage(`data:image/png;base64,${data.updated_image_base64}`)
+      setCurrentImage(`data:image/png;base64,${data.updated_image_base64}`)
+    } catch (err: any) {
+      setError(`Failed to update image: ${err.message}`)
+    } finally {
+      setLoading((prev) => ({ ...prev, update: false }))
+    }
+  }
+
+  // Placeholder image for when no image is generated yet
+  const placeholderImage =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' dominantBaseline='middle' textAnchor='middle' fontFamily='sans-serif' fontSize='24' fill='%23666'%3EOutfit image will appear here%3C/text%3E%3C/svg%3E"
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/images/fashion-store-background.png')] bg-cover bg-center opacity-20"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            className="flex flex-col items-center text-center max-w-4xl mx-auto"
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-          >
-            <motion.h1 className="text-5xl md:text-6xl font-bold mb-6" variants={slideUp}>
-              Revolutionize Fashion Design with AI
-            </motion.h1>
-            <motion.p className="text-xl text-gray-300 mb-10 max-w-2xl" variants={slideUp}>
-              Create stunning outfit and shoe designs in seconds with our AI-powered design studio. From concept to
-              visualization in one simple step.
-            </motion.p>
-            <motion.div className="flex flex-col sm:flex-row gap-4" variants={slideUp}>
-              <Link
-                href="/outfits/create"
-                className="btn-primary bg-gradient-green px-8 py-3 rounded-md text-lg font-medium flex items-center justify-center"
-              >
-                <Shirt className="h-5 w-5 mr-2" />
-                Design Outfit
-              </Link>
-              <Link
-                href="/shoes/create"
-                className="btn-primary bg-black border border-green-600 px-8 py-3 rounded-md text-lg font-medium flex items-center justify-center hover:bg-green-900/20 transition-colors"
-              >
-                <Footprints className="h-5 w-5 mr-2" />
-                Design Shoes
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+    <div className="container mx-auto py-10 px-4 min-h-screen">
+      <motion.div
+        className="flex flex-col items-center justify-center mb-10"
+        variants={slideUp}
+        initial="hidden"
+        animate="visible"
+      >
+        <h1 className="text-4xl font-bold text-center mb-2 flex items-center">
+          <Shirt className="h-8 w-8 mr-3 text-green-500" />
+          AI Outfit Designer
+        </h1>
+        <p className="text-xl text-muted-foreground text-center max-w-2xl">
+          Create stunning outfit designs with AI-powered generation
+        </p>
+      </motion.div>
 
-      {/* Features Section */}
-      <section className="py-20 bg-black">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="text-center mb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <h2 className="text-4xl font-bold mb-4">Powerful Features</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Our AI-powered platform offers everything you need to bring your fashion ideas to life.
-            </p>
-          </motion.div>
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="bg-red-900/30 border border-red-700 text-red-200 px-4 py-3 rounded mb-6"
+        >
+          {error}
+        </motion.div>
+      )}
 
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-          >
-            {features.map((feature, index) => (
-              <motion.div key={index} className="bg-gradient-black card-gradient p-6 rounded-lg" variants={slideUp}>
-                <div className="mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-gray-300">{feature.description}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="py-20 bg-gradient-black">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="text-center mb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <h2 className="text-4xl font-bold mb-4">Our Services</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Explore the range of AI-powered fashion design services we offer.
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-          >
-            <motion.div className="bg-black/50 rounded-lg overflow-hidden" variants={slideUp}>
-              <div className="h-64 bg-[url('/placeholder.svg?height=600&width=800')] bg-cover bg-center relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-6">
-                  <h3 className="text-2xl font-bold mb-2">Outfit Design</h3>
-                  <p className="text-gray-300 mb-4">
-                    Create complete outfits from casual wear to haute couture with simple text prompts.
-                  </p>
-                  <Link
-                    href="/outfits/create"
-                    className="flex items-center text-green-500 hover:text-green-400 transition-colors"
-                  >
-                    Try it now <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </div>
+      <div className="w-full max-w-4xl mx-auto space-y-6">
+        {/* Generate Section */}
+        <motion.div
+          className="bg-gradient-black card-gradient p-6"
+          variants={slideUp}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="flex flex-col space-y-1.5 p-6 pt-0">
+            <h3 className="text-2xl font-semibold leading-none tracking-tight">Generate Outfit Design</h3>
+            <p className="text-sm text-muted-foreground">Describe the outfit you want to create</p>
+          </div>
+          <div className="p-6 pt-0 space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Raw Prompt</label>
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="E.g., A casual summer dress with floral pattern"
+                  value={rawPrompt}
+                  onChange={(e) => setRawPrompt(e.target.value)}
+                  className="flex-1"
+                  rows={3}
+                />
+                <motion.button
+                  onClick={enhancePrompt}
+                  className="btn-primary bg-gradient-green h-auto disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  disabled={loading.enhance || !rawPrompt.trim()}
+                  variants={buttonHover}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  {loading.enhance ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Enhance
+                    </>
+                  )}
+                </motion.button>
               </div>
-            </motion.div>
-
-            <motion.div className="bg-black/50 rounded-lg overflow-hidden" variants={slideUp}>
-              <div className="h-64 bg-[url('/placeholder.svg?height=600&width=800')] bg-cover bg-center relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-6">
-                  <h3 className="text-2xl font-bold mb-2">Shoe Design</h3>
-                  <p className="text-gray-300 mb-4">
-                    Design footwear ranging from sneakers to formal shoes with detailed customization.
-                  </p>
-                  <Link
-                    href="/shoes/create"
-                    className="flex items-center text-green-500 hover:text-green-400 transition-colors"
-                  >
-                    Try it now <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-20 bg-black">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="text-center mb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <h2 className="text-4xl font-bold mb-4">What Our Users Say</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Hear from fashion designers and brands who have transformed their design process with our platform.
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-          >
-            {testimonials.map((testimonial, index) => (
-              <motion.div key={index} className="bg-gradient-black card-gradient p-6 rounded-lg" variants={slideUp}>
-                <div className="mb-6">
-                  <svg className="h-8 w-8 text-green-500 mb-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                  </svg>
-                  <p className="text-gray-300 italic mb-6">{testimonial.quote}</p>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
-                    <img
-                      src={testimonial.avatar || "/placeholder.svg"}
-                      alt={testimonial.author}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-bold">{testimonial.author}</h4>
-                    <p className="text-gray-400 text-sm">{testimonial.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-black">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="text-center max-w-3xl mx-auto"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <h2 className="text-4xl font-bold mb-6">Ready to Transform Your Design Process?</h2>
-            <p className="text-xl text-gray-300 mb-10">
-              Join thousands of fashion designers and brands who are already using FashionAI Studio to create stunning
-              designs in minutes.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/login"
-                className="btn-primary bg-gradient-green px-8 py-3 rounded-md text-lg font-medium flex items-center justify-center"
-              >
-                Get Started Now
-              </Link>
-              <Link
-                href="/contact"
-                className="btn-primary bg-black border border-green-600 px-8 py-3 rounded-md text-lg font-medium flex items-center justify-center hover:bg-green-900/20 transition-colors"
-              >
-                Contact Sales
-              </Link>
             </div>
-          </motion.div>
-        </div>
-      </section>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Enhanced Prompt</label>
+              <Textarea
+                placeholder="Your enhanced prompt will appear here"
+                value={enhancedPrompt}
+                onChange={(e) => setEnhancedPrompt(e.target.value)}
+                className="w-full"
+                rows={5}
+              />
+            </div>
+          </div>
+          <div className="flex items-center p-6 pt-0 justify-between">
+            <motion.button
+              onClick={() => generateImage(false)}
+              className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              disabled={loading.generate || !rawPrompt.trim()}
+              variants={buttonHover}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              {loading.generate ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <>
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Use Raw Prompt
+                </>
+              )}
+            </motion.button>
+            <motion.button
+              onClick={() => generateImage(true)}
+              className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              disabled={loading.generate || !enhancedPrompt.trim()}
+              variants={buttonHover}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              {loading.generate ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Generate with Enhanced Prompt
+                </>
+              )}
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* Generated Image */}
+        {generatedImage && (
+          <>
+            <motion.div
+              className="bg-gradient-black card-gradient"
+              variants={slideUp}
+              initial="hidden"
+              animate="visible"
+            >
+              <div className="flex flex-col space-y-1.5 p-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight">Generated Outfit</h3>
+              </div>
+              <div className="p-6 pt-0 flex justify-center">
+                <motion.div
+                  className="relative w-full max-w-md aspect-square bg-gray-800 rounded-md overflow-hidden"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <img
+                    src={generatedImage || placeholderImage}
+                    alt="Generated outfit design"
+                    className="object-contain w-full h-full"
+                  />
+                </motion.div>
+              </div>
+              <div className="p-6 pt-0 flex justify-center">
+                <motion.button
+                  onClick={() => setShowEditSection(true)}
+                  className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  variants={buttonHover}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Edit This Outfit
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Edit Section */}
+            {showEditSection && (
+              <motion.div
+                className="bg-gradient-black card-gradient"
+                variants={slideUp}
+                initial="hidden"
+                animate="visible"
+              >
+                <div className="flex flex-col space-y-1.5 p-6">
+                  <h3 className="text-2xl font-semibold leading-none tracking-tight">Edit Outfit Design</h3>
+                  <p className="text-sm text-muted-foreground">Modify your generated outfit with text instructions</p>
+                </div>
+                <div className="p-6 pt-0 space-y-4">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <motion.div
+                      className="relative w-full md:w-1/2 aspect-square bg-gray-800 rounded-md overflow-hidden"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <img
+                        src={currentImage || placeholderImage}
+                        alt="Current outfit design"
+                        className="object-contain w-full h-full"
+                      />
+                    </motion.div>
+                    <motion.div
+                      className="w-full md:w-1/2 space-y-4"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Edit Instructions</label>
+                        <Textarea
+                          placeholder="E.g., Change the color to blue, add a belt"
+                          value={updateInstruction}
+                          onChange={(e) => setUpdateInstruction(e.target.value)}
+                          className="w-full"
+                          rows={5}
+                        />
+                      </div>
+                      <motion.button
+                        onClick={updateImage}
+                        className="btn-primary bg-gradient-green w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        disabled={loading.update || !updateInstruction.trim()}
+                        variants={buttonHover}
+                        initial="rest"
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        {loading.update ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <>
+                            <Wand2 className="h-4 w-4 mr-2" />
+                            Update Outfit
+                          </>
+                        )}
+                      </motion.button>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Updated Image */}
+            {updatedImage && (
+              <motion.div
+                className="bg-gradient-black card-gradient"
+                variants={slideUp}
+                initial="hidden"
+                animate="visible"
+              >
+                <div className="flex flex-col space-y-1.5 p-6">
+                  <h3 className="text-2xl font-semibold leading-none tracking-tight">Updated Outfit</h3>
+                </div>
+                <div className="p-6 pt-0 flex justify-center">
+                  <motion.div
+                    className="relative w-full max-w-md aspect-square bg-gray-800 rounded-md overflow-hidden"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <img
+                      src={updatedImage || placeholderImage}
+                      alt="Updated outfit design"
+                      className="object-contain w-full h-full"
+                    />
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

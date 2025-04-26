@@ -4,9 +4,8 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/navbar"
-import { Sidebar } from "@/components/sidebar"
-import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/context/auth-context"
+import { Sidebar } from "@/components/sidebar"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -32,14 +31,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <AuthProvider>
-            <div className="flex min-h-screen">
+            <Navbar />
+            <main className="pt-16 flex">
               <Sidebar />
-              <div className="flex-1 md:ml-64">
-                <Navbar />
-                <main className="pt-16">{children}</main>
-                <Footer />
-              </div>
-            </div>
+              <div className="ml-64 flex-1">{children}</div>
+            </main>
           </AuthProvider>
         </ThemeProvider>
       </body>

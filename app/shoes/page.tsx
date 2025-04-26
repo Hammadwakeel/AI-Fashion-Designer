@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, Sparkles, ImageIcon, Wand2, Footprints } from "lucide-react"
 import { motion } from "framer-motion"
@@ -39,7 +38,7 @@ export default function ShoesPage() {
     update: false,
   })
   const [error, setError] = useState("")
-  const [activeTab, setActiveTab] = useState("create")
+  const [showEditSection, setShowEditSection] = useState(false)
 
   const API_BASE_URL = "https://hammad712-fashion-designer.hf.space"
 
@@ -151,10 +150,6 @@ export default function ShoesPage() {
     }
   }
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value)
-  }
-
   // Placeholder image for when no image is generated yet
   const placeholderImage =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' dominantBaseline='middle' textAnchor='middle' fontFamily='sans-serif' fontSize='24' fill='%23666'%3EShoe image will appear here%3C/text%3E%3C/svg%3E"
@@ -187,143 +182,104 @@ export default function ShoesPage() {
         </motion.div>
       )}
 
-      <Tabs
-        defaultValue="create"
-        className="w-full max-w-4xl mx-auto"
-        value={activeTab}
-        onValueChange={handleTabChange}
-      >
-        <TabsList className="grid w-full grid-cols-2 bg-black/50">
-          <TabsTrigger value="create">Create Shoe</TabsTrigger>
-          <TabsTrigger value="edit">Edit Shoe</TabsTrigger>
-        </TabsList>
+      <div className="w-full max-w-4xl mx-auto space-y-6">
+        {/* Generate Section */}
+        <motion.div
+          className="bg-gradient-black card-gradient p-6"
+          variants={slideUp}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="flex flex-col space-y-1.5 p-6 pt-0">
+            <h3 className="text-2xl font-semibold leading-none tracking-tight">Generate Shoe Design</h3>
+            <p className="text-sm text-muted-foreground">Describe the shoe you want to create</p>
+          </div>
+          <div className="p-6 pt-0 space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Raw Prompt</label>
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="E.g., A sleek running shoe with red accents"
+                  value={rawPrompt}
+                  onChange={(e) => setRawPrompt(e.target.value)}
+                  className="flex-1"
+                  rows={3}
+                />
+                <motion.button
+                  onClick={enhancePrompt}
+                  className="btn-primary bg-gradient-green h-auto disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  disabled={loading.enhance || !rawPrompt.trim()}
+                  variants={buttonHover}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  {loading.enhance ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Enhance
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </div>
 
-        {activeTab === "create" && (
-          <TabsContent value="create" className="space-y-6">
-            <motion.div
-              className="bg-gradient-black card-gradient p-6"
-              variants={slideUp}
-              initial="hidden"
-              animate="visible"
+            <div>
+              <label className="block text-sm font-medium mb-1">Enhanced Prompt</label>
+              <Textarea
+                placeholder="Your enhanced prompt will appear here"
+                value={enhancedPrompt}
+                onChange={(e) => setEnhancedPrompt(e.target.value)}
+                className="w-full"
+                rows={5}
+              />
+            </div>
+          </div>
+          <div className="flex items-center p-6 pt-0 justify-between">
+            <motion.button
+              onClick={() => generateImage(false)}
+              className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              disabled={loading.generate || !rawPrompt.trim()}
+              variants={buttonHover}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
             >
-              <div className="flex flex-col space-y-1.5 p-6 pt-0">
-                <h3 className="text-2xl font-semibold leading-none tracking-tight">Generate Shoe Design</h3>
-                <p className="text-sm text-muted-foreground">Describe the shoe you want to create</p>
-              </div>
-              <div className="p-6 pt-0 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Raw Prompt</label>
-                  <div className="flex gap-2">
-                    <Textarea
-                      placeholder="E.g., A sleek running shoe with red accents"
-                      value={rawPrompt}
-                      onChange={(e) => setRawPrompt(e.target.value)}
-                      className="flex-1"
-                      rows={3}
-                    />
-                    <motion.button
-                      onClick={enhancePrompt}
-                      className="btn-primary bg-gradient-green h-auto disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                      disabled={loading.enhance || !rawPrompt.trim()}
-                      variants={buttonHover}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      {loading.enhance ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Enhance
-                        </>
-                      )}
-                    </motion.button>
-                  </div>
-                </div>
+              {loading.generate ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <>
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Use Raw Prompt
+                </>
+              )}
+            </motion.button>
+            <motion.button
+              onClick={() => generateImage(true)}
+              className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              disabled={loading.generate || !enhancedPrompt.trim()}
+              variants={buttonHover}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              {loading.generate ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Generate with Enhanced Prompt
+                </>
+              )}
+            </motion.button>
+          </div>
+        </motion.div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Enhanced Prompt</label>
-                  <Textarea
-                    placeholder="Your enhanced prompt will appear here"
-                    value={enhancedPrompt}
-                    onChange={(e) => setEnhancedPrompt(e.target.value)}
-                    className="w-full"
-                    rows={5}
-                  />
-                </div>
-              </div>
-              <div className="flex items-center p-6 pt-0 justify-between">
-                <motion.button
-                  onClick={() => generateImage(false)}
-                  className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  disabled={loading.generate || !rawPrompt.trim()}
-                  variants={buttonHover}
-                  initial="rest"
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  {loading.generate ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <>
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      Use Raw Prompt
-                    </>
-                  )}
-                </motion.button>
-                <motion.button
-                  onClick={() => generateImage(true)}
-                  className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  disabled={loading.generate || !enhancedPrompt.trim()}
-                  variants={buttonHover}
-                  initial="rest"
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  {loading.generate ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Generate with Enhanced Prompt
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {generatedImage && (
-              <motion.div
-                className="bg-gradient-black card-gradient"
-                variants={slideUp}
-                initial="hidden"
-                animate="visible"
-              >
-                <div className="flex flex-col space-y-1.5 p-6">
-                  <h3 className="text-2xl font-semibold leading-none tracking-tight">Generated Shoe</h3>
-                </div>
-                <div className="p-6 pt-0 flex justify-center">
-                  <motion.div
-                    className="relative w-full max-w-md aspect-square bg-gray-800 rounded-md overflow-hidden"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <img
-                      src={generatedImage || placeholderImage}
-                      alt="Generated shoe design"
-                      className="object-contain w-full h-full"
-                    />
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
-          </TabsContent>
-        )}
-
-        {activeTab === "edit" && (
-          <TabsContent value="edit" className="space-y-6">
+        {/* Generated Image */}
+        {generatedImage && (
+          <>
             <motion.div
               className="bg-gradient-black card-gradient"
               variants={slideUp}
@@ -331,11 +287,50 @@ export default function ShoesPage() {
               animate="visible"
             >
               <div className="flex flex-col space-y-1.5 p-6">
-                <h3 className="text-2xl font-semibold leading-none tracking-tight">Edit Shoe Design</h3>
-                <p className="text-sm text-muted-foreground">Modify your generated shoe with text instructions</p>
+                <h3 className="text-2xl font-semibold leading-none tracking-tight">Generated Shoe</h3>
               </div>
-              <div className="p-6 pt-0 space-y-4">
-                {currentImage ? (
+              <div className="p-6 pt-0 flex justify-center">
+                <motion.div
+                  className="relative w-full max-w-md aspect-square bg-gray-800 rounded-md overflow-hidden"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <img
+                    src={generatedImage || placeholderImage}
+                    alt="Generated shoe design"
+                    className="object-contain w-full h-full"
+                  />
+                </motion.div>
+              </div>
+              <div className="p-6 pt-0 flex justify-center">
+                <motion.button
+                  onClick={() => setShowEditSection(true)}
+                  className="btn-primary bg-gradient-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  variants={buttonHover}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Edit This Shoe
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Edit Section */}
+            {showEditSection && (
+              <motion.div
+                className="bg-gradient-black card-gradient"
+                variants={slideUp}
+                initial="hidden"
+                animate="visible"
+              >
+                <div className="flex flex-col space-y-1.5 p-6">
+                  <h3 className="text-2xl font-semibold leading-none tracking-tight">Edit Shoe Design</h3>
+                  <p className="text-sm text-muted-foreground">Modify your generated shoe with text instructions</p>
+                </div>
+                <div className="p-6 pt-0 space-y-4">
                   <div className="flex flex-col md:flex-row gap-6">
                     <motion.div
                       className="relative w-full md:w-1/2 aspect-square bg-gray-800 rounded-md overflow-hidden"
@@ -385,20 +380,11 @@ export default function ShoesPage() {
                       </motion.button>
                     </motion.div>
                   </div>
-                ) : (
-                  <motion.div
-                    className="text-center py-10"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <Footprints className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Generate a shoe first to edit it</p>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
+                </div>
+              </motion.div>
+            )}
 
+            {/* Updated Image */}
             {updatedImage && (
               <motion.div
                 className="bg-gradient-black card-gradient"
@@ -425,9 +411,9 @@ export default function ShoesPage() {
                 </div>
               </motion.div>
             )}
-          </TabsContent>
+          </>
         )}
-      </Tabs>
+      </div>
     </div>
   )
 }
