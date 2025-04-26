@@ -4,21 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-  Shirt,
-  Footprints,
-  Home,
-  Info,
-  Mail,
-  Menu,
-  X,
-  PlusCircle,
-  Sparkles,
-  ChevronRight,
-  PenTool,
-  User,
-} from "lucide-react"
-import { useAuth } from "@/context/auth-context"
+import { Shirt, Footprints, Home, Info, Mail, Menu, X, PlusCircle, Sparkles, ChevronRight, PenTool } from "lucide-react"
 
 const sidebarVariants = {
   open: {
@@ -44,7 +30,6 @@ export function Sidebar() {
   const pathname = usePathname()
   const [outfitSubmenu, setOutfitSubmenu] = useState(false)
   const [shoeSubmenu, setShoeSubmenu] = useState(false)
-  const { user, isAuthenticated, logout } = useAuth()
 
   const toggleSidebar = () => setIsOpen(!isOpen)
   const closeSidebar = () => setIsOpen(false)
@@ -98,44 +83,6 @@ export function Sidebar() {
               <Sparkles className="h-6 w-6 mr-2 text-green-500" />
               <span className="text-xl font-bold">FashionAI Studio</span>
             </Link>
-          </div>
-
-          {/* User profile section */}
-          <div className="p-4 border-b border-gray-800">
-            {isAuthenticated ? (
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-green-700 flex items-center justify-center mr-3 overflow-hidden">
-                  {user?.image ? (
-                    <img
-                      src={user.image || "/placeholder.svg"}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-5 w-5 text-white" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium">{user?.name}</p>
-                  <Link
-                    href="/profile"
-                    className="text-sm text-green-500 hover:text-green-400 transition-colors"
-                    onClick={closeSidebar}
-                  >
-                    View Profile
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="btn-primary bg-gradient-green w-full py-2 rounded-md text-sm font-medium flex items-center justify-center"
-                onClick={closeSidebar}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Log In
-              </Link>
-            )}
           </div>
 
           <nav className="flex-1 overflow-y-auto py-4">

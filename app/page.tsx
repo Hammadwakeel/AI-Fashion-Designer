@@ -174,7 +174,7 @@ export default function Home() {
             variants={staggerContainer}
           >
             <motion.div className="bg-black/50 rounded-lg overflow-hidden" variants={slideUp}>
-              <div className="h-64 bg-[url('/images/outfit-display.png')] bg-cover bg-center relative">
+              <div className="h-64 bg-[url('/placeholder.svg?height=600&width=800')] bg-cover bg-center relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-6">
                   <h3 className="text-2xl font-bold mb-2">Outfit Design</h3>
@@ -192,7 +192,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div className="bg-black/50 rounded-lg overflow-hidden" variants={slideUp}>
-              <div className="h-64 bg-[url('/images/shoes-display.png')] bg-cover bg-center relative">
+              <div className="h-64 bg-[url('/placeholder.svg?height=600&width=800')] bg-cover bg-center relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-6">
                   <h3 className="text-2xl font-bold mb-2">Shoe Design</h3>
