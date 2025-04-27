@@ -18,12 +18,17 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-black border-b border-gray-800">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
+          {/* Left - Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center text-white font-bold text-xl">
+            <Link href="/home" className="flex items-center text-white font-bold text-xl">
               <Sparkles className="h-6 w-6 mr-2 text-green-500" />
               <span>FashionAI Studio</span>
             </Link>
-            <nav className="ml-10 hidden md:flex space-x-4">
+          </div>
+
+          {/* Center - Navigation */}
+          <div className="flex items-center justify-center">
+            <nav className="flex space-x-4">
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
@@ -41,6 +46,8 @@ export function Navbar() {
               })}
             </nav>
           </div>
+
+          {/* Right - Auth */}
           <div className="flex items-center">
             {isAuthenticated ? (
               <Link

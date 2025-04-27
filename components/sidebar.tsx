@@ -2,26 +2,21 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Shirt, Footprints, PlusCircle } from "lucide-react"
+import { PlusCircle } from "lucide-react"
 import { motion } from "framer-motion"
 
 export function Sidebar() {
   const pathname = usePathname()
 
-  const sidebarItems = [
-    {
-      name: "Outfits",
-      href: "/",
-      icon: <Shirt className="h-5 w-5 mr-2" />,
-      active: pathname === "/",
-    },
-    {
-      name: "Shoes",
-      href: "/shoes",
-      icon: <Footprints className="h-5 w-5 mr-2" />,
-      active: pathname === "/shoes",
-    },
-  ]
+  // Pages where sidebar should not be shown
+  const hideSidebarPaths = ["/home", "/login", "/signup"]
+
+  // Don't render sidebar on specified pages
+  if (hideSidebarPaths.includes(pathname)) {
+    return null
+  }
+
+  const sidebarItems = []
 
   return (
     <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-gradient-black border-r border-gray-800 p-4">
